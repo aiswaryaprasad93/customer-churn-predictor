@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import shap
-import matplotlib.pyplot as plt
 
 model    = joblib.load("churn_model.pkl")
 scaler   = joblib.load("scaler.pkl")
@@ -26,13 +24,23 @@ with col2:
 if st.button("🔮 Predict Churn", type="primary"):
     sample = pd.DataFrame(columns=features)
     sample.loc[0] = 0
-    sample['tenure']          = tenure
-    sample['MonthlyCharges']  = monthly_charges
-    sample['TotalCharges']    = total_charges
-    sample['AvgMonthlySpend'] = monthly_charges
-    sample['SeniorCitizen']   = int(senior)
-    sample['PaperlessBilling']= int(paperless)
+    sample['tenure']           = tenure
+    sample['MonthlyCharges']   = monthly_charges
+    sample['TotalCharges']     = total_charges
+    sample['AvgMonthlySpend']  = monthly_charges
+    sample['SeniorCitizen']    = int(senior)
+    sample['PaperlessBilling'] = int(paperless)
 
     scaled = scaler.transform(sample)
     prob   = model.predict_proba(scaled)[0][1]
-    label  = "🔴 Likely to Churn"
+    label  = "🔴 Likely to Churn" if prob > 0.5 else "🟢 Likely to Stay"
+
+    st.markdown("---")
+    st.subheader(f"Prediction: {label}")
+    st.metric("Churn Probability", f"{prob*100:.1f}%")
+    st.progress(float(prob))
+
+    if prob > 0.5:
+        st.warning("⚠️ Recommend: offer discount or contract upgrade.")
+    else:
+        st.success("✅ Customer appears stable.")
